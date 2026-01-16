@@ -2,12 +2,13 @@ from bs4 import BeautifulSoup
 import Src.Utilities.config as config
 import logging
 from Src.Utilities.config import setup_logging
+
 level = config.LEVEL
 logger = setup_logging(level)
+
+# Ho rimosso le virgolette triple, ora questi canali sono attivi
 tivu = {
     "dazn-zona-a": "801",
-}
-"""
     "rai-1": "3401",
     "rai-2": "3402",
     "rai-3": "3403",
@@ -34,10 +35,11 @@ tivu = {
     "k2": "15204",
     "foodnetwork": "15203",
     "hgtv": "4334",
-    "solocalcio": "4996" ,
+    "solocalcio": "4996",
     "euronews": "2017",
     "rai-4k": "3407",
-"""
+}
+
 convert_bho_1 = {
     "euronews": "PlutoEuronews.it",
     "cartoonito": "cartoonito",
@@ -52,7 +54,7 @@ convert_bho_1 = {
     "rsi-la-2": "rsila2",
     "baby-shark-tv": "RakutenBabySharkTv.it",
     "adrenaline-movies": "RakutenFullMoon.it",
-    "adrenaline-movies": "RakutenBizzarroMovies.it",
+    # "adrenaline-movies": "RakutenBizzarroMovies.it", # DUPLICATO: Ho commentato questo per evitare errori
     "cinema-italiano": "RakutenCinemaItalianoRakutenTv.it",
     "le-vite-degli-altri": "RakutenLeViteDegliAltri.it",
     "dark-matter": "RakutenDarkMatterItNew.it",
@@ -66,9 +68,7 @@ convert_bho_1 = {
     "the-asylum": "PlutoTheAsylum.it",
     "western": "PlutoTvWestern.it",
     "consulenze-illegali": "PlutoConsulenzeIllegaliItPlus.it"
-    
 }
-
 
 convert_bho_2 = {
     "rai-1": "Rai%201",
@@ -115,6 +115,7 @@ convert_bho_2 = {
     "nove": "Nove",
     "realtime": "Real Time",
 }
+
 convert_bho_3 = {
     "la7": "La7",
     "rai-news": "Rai News DTT",
@@ -141,14 +142,18 @@ convert_bho_3 = {
 }
 
 
-async def tivu_get(id,client):
+async def tivu_get(id, client):
     try:
-        ik = tivu[id]
+        # Ora id come 'rai-1' verrà trovato nel dizionario tivu
+        ik = tivu.get(id)
+        if not ik:
+            # Se l'ID non c'è, restituisce una descrizione generica
+            return f'Watch {id}'
+
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0',
             'Accept': '*/*',
             'Accept-Language': 'en-US,en;q=0.5',
-            # 'Accept-Encoding': 'gzip, deflate, br, zstd',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'X-Requested-With': 'XMLHttpRequest',
             'Origin': 'https://www.tivu.tv',
@@ -156,7 +161,6 @@ async def tivu_get(id,client):
             'Sec-GPC': '1',
             'Connection': 'keep-alive',
             'Referer': 'https://www.tivu.tv/schedasat-rai1.html',
-            # 'Cookie': 'ASP.NET_SessionId=p2fk5silp5mjgtx0j5chjrh3',
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
@@ -168,58 +172,57 @@ async def tivu_get(id,client):
         }
 
         response = await client.post('https://www.tivu.tv/getPrograms.ashx', headers=headers, data=data)
-        soup = BeautifulSoup(response.text,'lxml')
+        soup = BeautifulSoup(response.text, 'lxml')
         tr_element = soup.find('tr', class_='in_onda')
-        hour_range = tr_element.find_all('td')[0].text.strip()
-        program_name = tr_element.find_all('td')[1].text.strip()
-        description = hour_range + " " + program_name
-        return description
+        if tr_element:
+            hour_range = tr_element.find_all('td')[0].text.strip()
+            program_name = tr_element.find_all('td')[1].text.strip()
+            description = hour_range + " " + program_name
+            return description
+        else:
+            return f'Watch {id}'
+            
     except Exception as e:
-        logger.warning(f"EPG {e}")
+        logger.warning(f"EPG Error for {id}: {e}")
         description = f'Watch {id}'
         return description
 
 
-
-async def epg_guide(id,client):
+async def epg_guide(id, client):
     try:
         if id in convert_bho_1:
             new_id = convert_bho_1[id]
-            new_id = new_id.replace(" ","%20")
+            new_id = new_id.replace(" ", "%20")
             response = await client.get(f"https://lorempizza-boh.hf.space/{new_id}/now")
         elif id in convert_bho_2:
             new_id = convert_bho_2[id]
-            new_id = new_id.replace(" ","%20")
+            new_id = new_id.replace(" ", "%20")
             response = await client.get(f"https://aimammam-boh2.hf.space/{new_id}/now")
         elif id in convert_bho_3:
             new_id = convert_bho_3[id]
-            new_id = new_id.replace(" ","%20")
-            response =  await client.get(f"https://aimammam-boh3.hf.space/{new_id}/now")
-        data = response.json()
-        description = data['description'].replace("- EPG by epg-guide.com","").replace("No description","")
-        title = data['title']
-        logger.info("MammaMia: EPG FOUND")
-        return description,title   
+            new_id = new_id.replace(" ", "%20")
+            response = await client.get(f"https://aimammam-boh3.hf.space/{new_id}/now")
+        else:
+            # Se l'ID non è nelle liste remote, proviamo con tivu_get locale
+            description = await tivu_get(id, client)
+            return description, ""
+
+        if response.status_code == 200:
+            data = response.json()
+            description = data['description'].replace("- EPG by epg-guide.com", "").replace("No description", "")
+            title = data['title']
+            logger.info("MammaMia: EPG FOUND")
+            return description, title
+        else:
+             # Fallback
+            description = await tivu_get(id, client)
+            return description, ""
+            
     except Exception as e:
         logger.debug(e)
         description = f'Watch {id}'
         title = ""
-        return description,title
-
-
-
-'''
-async def test_animeworld():
-    async with httpx.AsyncClient() as client:
-        test_id = "rai-1"  # Replace with actual ID
-        try:
-            results = await epg_guide(test_id, client)
-            print(results)
-        except httpx.HTTPStatusError as e:
-            print(f"HTTP error occurred: {e}")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-
+        return description, title
 if __name__ == "__main__":
     import httpx
     import asyncio
