@@ -1,6 +1,11 @@
-# static.py
+
 
 HTML = """
+I fantasized 'bout this back in Chicago
+Mercy, mercy me, that Murcielago
+That's me, the first year that I blow
+How you say broke in Spanish? Me no hablo
+"""
 <!DOCTYPE html>
 <html>
 <head>
