@@ -13,7 +13,7 @@
               "CB_PROXY":"0",
               "CB_ForwardProxy":"0",
               "MX_ForwardProxy":"0",
-              "MX_PROXY":"0",
+              "MX_PROXY":"1",
               "enabled":"1"
           },
           "Guardaserie":{
@@ -32,19 +32,19 @@
             "url": "https://eurostreamings.life",
             "enabled": "1",
             "ES_ForwardProxy": "0",
-            "ES_PROXY": "0"
+            "ES_PROXY": "1"
           },  
           "Guardaflix":{
             "url": "https://guardaplay.blog",
             "enabled": "1",
             "GF_ForwardProxy": "0",
-            "GF_PROXY": "0"
+            "GF_PROXY": "1"
           },
           "Guardoserie":{
             "url": "https://guardoserie.blog",
             "enabled": "1",
             "GO_ForwardProxy": "0",
-            "GO_PROXY": "0"
+            "GO_PROXY": "1"
           },
           "AnimeWorld":{
             "url": "https://www.animeworld.ac",
@@ -56,19 +56,19 @@
             "url": "https://realtime.it",
             "enabled": "1",
             "RT_ForwardProxy": "0",
-            "RT_PROXY": "0"
+            "RT_PROXY": "1"
           },
           "Toonitalia": {
             "url": "https://toonitalia.xyz",
             "enabled": "1",
             "TI_ForwardProxy": "0",
-            "TI_PROXY": "0"
+            "TI_PROXY": "1"
           }
    },
    "Captcha":{
     "Uprot": {
       "UT_ForwardProxy": "0",
-      "UT_PROXY": "0"
+      "UT_PROXY": "1"
     }
    },
    "General":{
