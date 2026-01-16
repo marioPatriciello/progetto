@@ -6,8 +6,10 @@ from Src.Utilities.config import setup_logging
 level = config.LEVEL
 logger = setup_logging(level)
 
-# Ho rimosso le virgolette triple, ora questi canali sono attivi
+# Questa è la lista che decide COSA appare su Stremio.
+# Ho aggiunto Sky e altri canali mancanti.
 tivu = {
+    # --- Digitale Terrestre ---
     "dazn-zona-a": "801",
     "rai-1": "3401",
     "rai-2": "3402",
@@ -38,6 +40,52 @@ tivu = {
     "solocalcio": "4996",
     "euronews": "2017",
     "rai-4k": "3407",
+    
+    # --- SKY & ALTRI (Aggiunti per farli apparire nel catalogo) ---
+    "sky-cinema-action": "0",
+    "sky-arte": "0",
+    "sky-atlantic": "0",
+    "sky-cinema-collection": "0",
+    "sky-cinema-comedy": "0",
+    "sky-cinema-drama": "0",
+    "sky-cinema-due": "0",
+    "sky-cinema-family": "0",
+    "sky-cinema-romance": "0",
+    "sky-cinema-suspence": "0",
+    "sky-cinema-uno": "0",
+    "sky-uno": "0",
+    "sky-sport-24": "0",
+    "sky-sport-uno": "0",
+    "sky-sport-f1": "0",
+    "sky-sport-motogp": "0",
+    "sky-sport-arena": "0",
+    "sky-sport-nba": "0",
+    "eurosport-1": "0",
+    "eurosport-2": "0",
+    "sky-crime": "0",
+    "sky-documentaries": "0",
+    "sky-investigation": "0",
+    "sky-nature": "0",
+    "sky-serie": "0",
+    "sky-sport-golf": "0",
+    "sky-sport-251": "0",
+    "sky-sport-252": "0",
+    "sky-sport-253": "0",
+    "sky-sport-254": "0",
+    "sky-sport-255": "0",
+    "sky-sport-256": "0",
+    "sky-sport-257": "0",
+    "sky-sport-258": "0",
+    "sky-sport-259": "0",
+    "sky-sport-260": "0",
+    "sky-sport-261": "0",
+    "sky-sport-max": "0",
+    "sky-sport-calcio": "0",
+    "sky-sport-tennis": "0",
+    "sky-tg-24": "0",
+    "sportitalia": "0",
+    "rsi-la-2": "0",
+    "supertennis": "0",
 }
 
 convert_bho_1 = {
@@ -54,7 +102,6 @@ convert_bho_1 = {
     "rsi-la-2": "rsila2",
     "baby-shark-tv": "RakutenBabySharkTv.it",
     "adrenaline-movies": "RakutenFullMoon.it",
-    # "adrenaline-movies": "RakutenBizzarroMovies.it", # DUPLICATO: Ho commentato questo per evitare errori
     "cinema-italiano": "RakutenCinemaItalianoRakutenTv.it",
     "le-vite-degli-altri": "RakutenLeViteDegliAltri.it",
     "dark-matter": "RakutenDarkMatterItNew.it",
@@ -144,10 +191,9 @@ convert_bho_3 = {
 
 async def tivu_get(id, client):
     try:
-        # Ora id come 'rai-1' verrà trovato nel dizionario tivu
         ik = tivu.get(id)
-        if not ik:
-            # Se l'ID non c'è, restituisce una descrizione generica
+        # Se il valore è "0" o None, non possiamo usare tivu_get, ritorniamo generico
+        if not ik or ik == "0":
             return f'Watch {id}'
 
         headers = {
@@ -203,7 +249,6 @@ async def epg_guide(id, client):
             new_id = new_id.replace(" ", "%20")
             response = await client.get(f"https://aimammam-boh3.hf.space/{new_id}/now")
         else:
-            # Se l'ID non è nelle liste remote, proviamo con tivu_get locale
             description = await tivu_get(id, client)
             return description, ""
 
@@ -214,7 +259,6 @@ async def epg_guide(id, client):
             logger.info("MammaMia: EPG FOUND")
             return description, title
         else:
-             # Fallback
             description = await tivu_get(id, client)
             return description, ""
             
@@ -223,8 +267,3 @@ async def epg_guide(id, client):
         description = f'Watch {id}'
         title = ""
         return description, title
-if __name__ == "__main__":
-    import httpx
-    import asyncio
-    asyncio.run(test_animeworld())
-'''
