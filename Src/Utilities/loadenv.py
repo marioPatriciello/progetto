@@ -10,13 +10,9 @@ if dotenv == "1":
 def load_env():
     env_vars = {}
     env_vars['TMDB_KEY'] = os.getenv('TMDB_KEY')
-    # Nota: Assicurati che su HF il secret sia PROXY o PROXY_CREDENTIALS in base a come lo hai chiamato
-    env_vars['PROXY_CREDENTIALS'] = os.getenv('PROXY') 
+    # Correzione Proxy precedente
+    env_vars['PROXY_CREDENTIALS'] = os.getenv('PROXY_CREDENTIALS') 
     env_vars['ForwardProxy'] = os.getenv('FORWARDPROXY')
     env_vars['PORT_ENV'] = os.getenv('PORT')
-    
-    # --- AGGIUNTA FONDAMENTALE PER MFP ---
-    env_vars['MFP_URL'] = os.getenv('MFP_URL')
-    env_vars['MFP_KEY'] = os.getenv('MFP_KEY')
     
     return env_vars
