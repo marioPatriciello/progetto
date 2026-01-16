@@ -1,30 +1,50 @@
 import os
-from bs4 import BeautifulSoup,SoupStrainer
+from bs4 import BeautifulSoup, SoupStrainer
 import json
 import logging
-import  Src.Utilities.config as config
+import Src.Utilities.config as config
 from Src.Utilities.config import setup_logging
-from Src.Utilities.loadenv import load_env  
+from Src.Utilities.loadenv import load_env
+import random
 
 UT_PROXY = config.UT_PROXY
 UT_ForwardProxy = config.UT_ForwardProxy
 level = config.LEVEL
 env_vars = load_env()
-import random
+
 logger = setup_logging(level)
-#Set up proxies
+
+# --- INIZIO MODIFICA: Gestione sicura dei Proxy ---
 proxies = {}
 if UT_PROXY == "1":
+    # Recupera la variabile d'ambiente
     PROXY_CREDENTIALS = env_vars.get('PROXY_CREDENTIALS')
-    proxy_list = json.loads(PROXY_CREDENTIALS)
-    proxy = random.choice(proxy_list)
+    
+    # Controlla se la variabile esiste e non è vuota
+    if PROXY_CREDENTIALS:
+        try:
+            proxy_list = json.loads(PROXY_CREDENTIALS)
+            if proxy_list:
+                proxy = random.choice(proxy_list)
+            else:
+                proxy = ""
+        except json.JSONDecodeError as e:
+            logger.error(f"Errore nel decodificare JSON PROXY_CREDENTIALS: {e}")
+            proxy = ""
+    else:
+        logger.warning("Variabile PROXY_CREDENTIALS non trovata o vuota (None).")
+        proxy = ""
+
+    # Imposta il dizionario proxies
     if proxy == "":
         proxies = {}
     else:
         proxies = {
             "http": proxy,
             "https": proxy
-        }   
+        }
+# --- FINE MODIFICA ---
+
 if UT_ForwardProxy == "1":
     ForwardProxy = env_vars.get('ForwardProxy')
 else:
@@ -47,30 +67,32 @@ headers = {
     'Sec-Fetch-User': '?1',
     'DNT': '1',
     'Priority': 'u=0, i',
-    }
+}
+
 async def get_uprot_numbers(client):
     try:
-        response = await client.post(ForwardProxy + url, headers=headers, proxies = proxies)
+        response = await client.post(ForwardProxy + url, headers=headers, proxies=proxies)
         set_cookie = response.headers.get('set-cookie')
         parts = set_cookie.split(';')[0].split('=')
         key = parts[0]
         value = parts[1]
         cookies = {
-            key:value
+            key: value
         }
-        soup = BeautifulSoup(response.text,'lxml',parse_only=SoupStrainer('img'))
-    
+        soup = BeautifulSoup(response.text, 'lxml', parse_only=SoupStrainer('img'))
+        
         img = soup.find('img')['src']
-        return img,cookies
+        return img, cookies
     except Exception as e:
-        logger.info(f'Uprot failed  to generate numberers/cookies: {e}')
-        return None,None
-async def generate_uprot_txt(numbers,cookies,client):
+        logger.info(f'Uprot failed to generate numberers/cookies: {e}')
+        return None, None
+
+async def generate_uprot_txt(numbers, cookies, client):
     try:
         data = {
-        'captcha': str(numbers),
+            'captcha': str(numbers),
         }
-        response = await client.post(ForwardProxy + url, cookies=cookies, headers=headers, data=data, proxies = proxies)
+        response = await client.post(ForwardProxy + url, cookies=cookies, headers=headers, data=data, proxies=proxies)
         if response.status_code != 200:
             return False
         set_cookie = response.headers.get('set-cookie')
@@ -80,51 +102,51 @@ async def generate_uprot_txt(numbers,cookies,client):
         cookies[key] = value
         current_directory = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(current_directory, 'uprot.txt')
-        with open(file_path,'w') as file:
+        with open(file_path, 'w') as file:
             file.write(f'{str(cookies)}\n{str(data)}')
             return True
         return False
     except Exception as e:
-        logger.info(f'Uprot failed  to generate captcha cookie: {e}')
+        logger.info(f'Uprot failed to generate captcha cookie: {e}')
         return False
 
-async def get_maxstream_link(text,client):
-    soup = BeautifulSoup(text,'lxml',parse_only=SoupStrainer('a'))
+async def get_maxstream_link(text, client):
+    soup = BeautifulSoup(text, 'lxml', parse_only=SoupStrainer('a'))
     a_tags = soup.find_all('a')
 
     max_stream = None
     for tag in a_tags:
         if 'C O N T I N U E' in tag.text.upper():
             max_stream = tag['href']
-    if max_stream: 
+    if max_stream:
         redirect = max_stream
         time = 0
         while 'uprots' in redirect:
-            response = await client.head(ForwardProxy + max_stream,headers=headers,impersonate = 'chrome', allow_redirects = True, proxies = proxies)
+            response = await client.head(ForwardProxy + max_stream, headers=headers, impersonate='chrome', allow_redirects=True, proxies=proxies)
             redirect = response.url
-            time+=1
+            time += 1
             if time == 1000:
                 return False
         max_stream = 'https://maxstream.video/emvvv/' + response.url.split('watchfree/')[1].split('/')[1]
     return max_stream
 
-async def bypass_uprot(client,link):
+async def bypass_uprot(client, link):
     try:
         if 'mse' in link:
-            link = link.replace('mse','msf')
+            link = link.replace('mse', 'msf')
         current_directory = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(current_directory, 'uprot.txt')
-        with open(file_path,'r') as file:
+        with open(file_path, 'r') as file:
             text = file.read()
             parts = text.split('\n')
             cookies = json.loads(parts[0].replace("'", '"'))
             data = json.loads(parts[1].replace("'", '"'))
-        response = await client.post(ForwardProxy + link, cookies=cookies, headers=headers, data =data, impersonate = 'chrome', proxies = proxies)
-        max_stream = await get_maxstream_link(response.text,client)
+        response = await client.post(ForwardProxy + link, cookies=cookies, headers=headers, data=data, impersonate='chrome', proxies=proxies)
+        max_stream = await get_maxstream_link(response.text, client)
         return max_stream
     except Exception as e:
         logger.info(f'Uprot failed: {e}')
-        if '[Errno 2] No such file or directory' in e:
+        # Correzione typo nell'errore originale (se presente)
+        if '[Errno 2] No such file or directory' in str(e): 
             return None
         return False
-
