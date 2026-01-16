@@ -1,3 +1,4 @@
+import json
 from Src.Utilities.info import get_info_tmdb, is_movie, get_info_imdb
 import Src.Utilities.config as config
 from fake_headers import Headers  
