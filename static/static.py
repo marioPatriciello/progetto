@@ -1,3 +1,5 @@
+# static.py
+
 HTML = """
 <!DOCTYPE html>
 <html>
@@ -184,4 +186,151 @@ HTML = """
         </div>
         <p class="description">🕵️‍♂️ = Mediaflowproxy might be needed <br>Select the box with this icon if you want to enable MFP for that source<br></p>
         <h3 class="gives">Select Providers:</h3>
-        <form class="pure-form" id="provider-
+        <form class="pure-form" id="provider-form">
+             <div class="provider-group">
+                <label for="guardoserie" class="provider-label">
+                    <input type="checkbox" id="guardoserie"> Guardoserie
+                </label>
+            </div>
+             <div class="provider-group">
+                <label for="guardaflix" class="provider-label">
+                    <input type="checkbox" id="guardaflix"> Guardaflix
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="animeworld" class="provider-label">
+                    <input type="checkbox" id="animeworld"> Animeworld
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="guardaserie" class="provider-label">
+                    <input type="checkbox" id="guardaserie"> Guardaserie
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="guardahd" class="provider-label">
+                    <input type="checkbox" id="guardahd"> GuardaHD
+                </label>
+            </div>
+          <div> 
+            </div>          
+            <div class="provider-group">
+                <label for="cb01" class="provider-label">
+                    <input type="checkbox" id="cb01"> CB01 🕵️‍♂️
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="streamingcommunity" class="provider-label">
+                    <input type="checkbox" id="streamingcommunity"> StreamingCommunity 🕵️‍♂️
+                    <input type="checkbox" id="streamingcommunity_mfp" checked> 🕵️‍♂️
+                </label>
+            </div>
+             <div class="provider-group">
+                <label for="eurostreaming" class="provider-label">
+                    <input type="checkbox" id="eurostreaming"> Eurostreaming 🕵️‍♂️
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="realtime" class="provider-label">
+                    <input type="checkbox" id="toonitalia"> Toonitalia
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="realtime" class="provider-label">
+                    <input type="checkbox" id="realtime"> Realtime
+                </label>
+            </div>
+        
+            <div class="provider-group">
+                <label for="livetv" class="provider-label">
+                    <input type="checkbox" id="livetv"> LiveTV
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="mediaflowproxy" class="provider-label">
+                    <input type="checkbox" id="mediaflowproxy"> MediaFlow Proxy
+                </label>
+                <button type="button" id="mediaFlowProxyButton">Insert Proxy Info</button>
+            </div>
+            <div id="mediaFlowProxyInputContainer" style="display: none;">
+                <input type="text" id="mediaFlowProxyInput" placeholder="Proxy URL">
+            </div>
+            <div id="mediaFlowProxyPasswordContainer" style="display: none;">
+                <input type="password" id="mediaFlowProxyPassword" placeholder="Insert Password">
+            </div>
+        </form>
+        <button id="generateManifestButton">Generate Manifest</button>
+        <div id="manifestBox"></div>
+        <button id="installButton">Install in Stremio</button>
+    </div>
+    <script>
+        // Toggle visibility of proxy input fields
+    document.getElementById('mediaFlowProxyButton').addEventListener('click', function() {
+        const inputContainer = document.getElementById('mediaFlowProxyInputContainer');
+        const passwordInputContainer = document.getElementById('mediaFlowProxyPasswordContainer');
+        inputContainer.style.display = inputContainer.style.display === 'none' ? 'block' : 'none';
+        passwordInputContainer.style.display = passwordInputContainer.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Function to generate the manifest URL
+    function generateManifest() {
+        let manifest = "|";
+        const providers = {
+            "streamingcommunity": "SC",
+            "animeworld": "AW",
+            "livetv": "LIVETV",
+            "cb01": "CB",
+            "guardaserie": "GS",
+            "guardahd": "GHD",
+            "guardoserie": "GO",
+            "guardaflix": "GF",
+            "eurostreaming": "ES",
+            "realtime": "RT",
+            "toonitalia": "TI",
+            "streamingcommunity_mfp": "SC_MFP",
+            "mediaflowproxy": "MFP"
+        };
+
+        // Loop through providers and add selected ones to the manifest
+        for (const id in providers) {
+            if (document.getElementById(id).checked) {
+                if (id === "mediaflowproxy") {
+                    // Add proxy details if MFP is selected
+                    const proxyUrl = document.getElementById("mediaFlowProxyInput").value.trim();
+                    const proxyPassword = document.getElementById("mediaFlowProxyPassword").value.trim();
+                    if (proxyUrl && proxyPassword) {
+                        manifest += `MFP[${proxyUrl},${proxyPassword}]|`;
+                    } else {
+                        manifest += providers[id] + "|"; // Fallback to just "MFP" if no details provided
+                    }
+                } else {
+                    manifest += providers[id] + "|";
+                }
+            }
+        }
+        const encodedProviders = btoa(manifest);
+        const instanceUrl = "{instance_url}"; // Replace with your instance URL
+        const manifestUrl = instanceUrl + "/" + encodedProviders + "/" + "manifest.json";
+        return manifestUrl;
+    }
+
+    // Generate manifest URL and display it
+    document.getElementById('generateManifestButton').addEventListener('click', function() {
+        const manifestUrl = generateManifest();
+        const manifestBox = document.getElementById("manifestBox");
+        manifestBox.style.display = "block";
+        manifestBox.innerText = manifestUrl;
+    });
+
+    // Install the manifest in Stremio
+    document.getElementById('installButton').addEventListener('click', function() {
+        let manifestUrl = generateManifest();
+        manifestUrl = manifestUrl.replace("http://", "");
+        manifestUrl = manifestUrl.replace("https://", "");
+        const stremioUrl = "stremio://" + manifestUrl;
+        window.location.href = stremioUrl;
+    });
+    </script>
+</body>
+</html>
+"""
